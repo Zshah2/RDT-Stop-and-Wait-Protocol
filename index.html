@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RDT Stop & Wait UDP Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>RDT Stop & Wait Protocol Implementation</h1>
+        <p>Interactive simulator with live UDP diagram + Java backend for actual file transfer</p>
+        <div style="margin-top: 15px; font-size: 12px; opacity: 0.9;">
+            <span style="margin: 0 10px;">📊 Web Simulator</span>
+            <span style="margin: 0 10px;">•</span>
+            <span style="margin: 0 10px;">☕ Java Implementation (Sender/Receiver)</span>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- LEFT PANEL - CONTROLS -->
+        <div class="control-panel">
+            <h2>UDP Configuration</h2>
+
+            <div class="form-group">
+                <label>Packet Limit (0 = unlimited)</label>
+                <input type="number" id="packetLimit" min="0" max="10000" value="0">
+            </div>
+
+            <div class="form-group">
+                <label>Auto Send Interval (ms)</label>
+                <input type="number" id="autoSendInterval" min="100" max="10000" value="1000">
+            </div>
+
+            <div class="form-group">
+                <label>Source Port</label>
+                <input type="number" id="sourcePort" min="1" max="65535" value="5000">
+            </div>
+
+            <div class="form-group">
+                <label>Destination Port</label>
+                <input type="number" id="destPort" min="1" max="65535" value="8080">
+            </div>
+
+            <div class="form-group">
+                <label>Sequence Number</label>
+                <input type="number" id="seqNum" min="0" max="1" value="0">
+            </div>
+
+            <div class="form-group">
+                <label>Payload Data</label>
+                <textarea id="packetData" placeholder="Enter payload data" rows="3">Hello Network</textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Payload Size</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="number" id="packetSize" min="1" max="999999" value="512" style="flex: 2;">
+                    <select id="packetSizeUnit" style="flex: 1;">
+                        <option value="bytes">Bytes</option>
+                        <option value="kb">KB</option>
+                        <option value="mb">MB</option>
+                        <option value="gb">GB</option>
+                    </select>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 25px;">Network Conditions</h2>
+
+            <div class="form-group">
+                <label>Packet Loss Rate (%)</label>
+                <input type="number" id="lossRate" min="0" max="100" value="10">
+            </div>
+
+            <div class="form-group">
+                <label>Delay (ms)</label>
+                <input type="number" id="delay" min="0" max="10000" value="100">
+            </div>
+
+            <div class="form-group">
+                <label>Corruption Rate (%)</label>
+                <input type="number" id="corruptionRate" min="0" max="100" value="5">
+            </div>
+
+            <div class="form-group">
+                <label>Timeout (ms)</label>
+                <input type="number" id="timeout" min="100" max="30000" value="1000">
+            </div>
+
+            <div class="form-group">
+                <label>Jitter (ms)</label>
+                <input type="number" id="jitter" min="0" max="5000" value="0">
+            </div>
+
+            <div class="form-group">
+                <label>Bandwidth (Mbps)</label>
+                <input type="number" id="bandwidth" min="0.1" max="10000" step="0.1" value="100">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-send" onclick="sendPacket()">Send Packet</button>
+                <button class="btn-send" id="autoSendBtn" onclick="toggleAutoSend()">Auto Send</button>
+                <button class="btn-reset" onclick="resetSimulation()">Reset</button>
+            </div>
+        </div>
+
+        <!-- CENTER PANEL - DIAGRAM -->
+        <div class="diagram-panel">
+            <div class="diagram-content">
+                <h2>UDP Packet Transmission</h2>
+
+                <div class="network-diagram">
+                    <!-- Sender -->
+                    <div class="entity sender">
+                        <div class="entity-label">Sender</div>
+                        <div class="entity-box">
+                            <div class="entity-state" id="senderState">Ready</div>
+                        </div>
+                    </div>
+
+                    <!-- Network/Transport -->
+                    <div class="network-section">
+                        <div class="network-label">Network (UDP)</div>
+                        <svg id="packetSvg" width="100%" height="120" style="background: #f0f0f0; border-radius: 6px;">
+                            <!-- Animated packet will be drawn here -->
+                        </svg>
+                        <div class="network-status" id="networkStatus">Idle</div>
+                    </div>
+
+                    <!-- Receiver -->
+                    <div class="entity receiver">
+                        <div class="entity-label">Receiver</div>
+                        <div class="entity-box">
+                            <div class="entity-state" id="receiverState">Waiting</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL - LIVE DATA -->
+        <div class="data-panel">
+            <h2>Live Data & Statistics</h2>
+
+            <div class="stats-container">
+                <div class="stat-item">
+                    <span class="stat-label">Packets Sent</span>
+                    <span class="stat-value" id="packetsSent">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">ACKs Received</span>
+                    <span class="stat-value" id="acksReceived">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Retransmissions</span>
+                    <span class="stat-value" id="retransmissions">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Packet Loss</span>
+                    <span class="stat-value" id="packetLoss">0</span>
+                </div>
+            </div>
+
+            <h3>Current UDP Packet</h3>
+            <div class="packet-info" id="packetInfo">
+                <div class="info-section">
+                    <div class="section-title">UDP Header</div>
+                    <div class="info-row">
+                        <span class="label">Source Port:</span>
+                        <span class="value" id="info-srcport">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Dest Port:</span>
+                        <span class="value" id="info-dstport">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Length:</span>
+                        <span class="value" id="info-length">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Checksum:</span>
+                        <span class="value" id="info-checksum">—</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="section-title">RDT Protocol</div>
+                    <div class="info-row">
+                        <span class="label">Seq #:</span>
+                        <span class="value" id="info-seq">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Payload Size:</span>
+                        <span class="value" id="info-size">—</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <div class="section-title">Payload</div>
+                    <div class="info-row">
+                        <span class="label">Data:</span>
+                        <span class="value" id="info-data">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Status:</span>
+                        <span class="value" id="info-status">—</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="event-log" id="eventLog">
+                <div class="log-entry log-info">System ready</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="Packet.js"></script>
+<script src="Pipe.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
