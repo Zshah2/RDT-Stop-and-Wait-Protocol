@@ -15,7 +15,7 @@ const state = {
 function convertPacketSize() {
     const size = parseFloat(document.getElementById('packetSize').value);
     const unit = document.getElementById('packetSizeUnit').value;
-
+    
     switch(unit) {
         case 'bytes':
             return size;
@@ -43,7 +43,7 @@ function formatBytes(bytes) {
 function toggleAutoSend() {
     const packetLimit = parseInt(document.getElementById('packetLimit').value);
     const autoSendBtn = document.getElementById('autoSendBtn');
-
+    
     if (packetLimit === 0) {
         addLog('Set packet limit to auto-send packets', 'warning');
         return;
@@ -62,15 +62,15 @@ function toggleAutoSend() {
         autoSendBtn.textContent = 'Stop Auto Send';
         autoSendBtn.style.opacity = '0.7';
         addLog(`Auto-send started (limit: ${packetLimit} packets)`, 'info');
-
+        
         const interval = parseInt(document.getElementById('autoSendInterval').value);
-
+        
         // Function to send next packet
         const sendNext = () => {
             if (!state.autoSendActive) return;
-
+            
             const currentLimit = parseInt(document.getElementById('packetLimit').value);
-
+            
             if (state.packetsSent >= currentLimit) {
                 // Stop auto-send when limit reached
                 state.autoSendActive = false;
@@ -85,7 +85,7 @@ function toggleAutoSend() {
             sendPacket();
             state.autoSendTimer = setTimeout(sendNext, interval);
         };
-
+        
         sendNext();
     }
 }
@@ -310,7 +310,7 @@ function resetSimulation() {
     document.getElementById('acksReceived').textContent = '0';
     document.getElementById('retransmissions').textContent = '0';
     document.getElementById('packetLoss').textContent = '0';
-
+    
     document.getElementById('senderState').textContent = 'Ready';
     document.getElementById('receiverState').textContent = 'Waiting';
     document.getElementById('networkStatus').textContent = 'Idle';
